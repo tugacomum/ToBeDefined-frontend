@@ -1,0 +1,47 @@
+.jspoc-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.editor-pane,
+.console-pane {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-pane h3,
+.console-pane h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.editor-pane button {
+  margin-top: 0.5rem;
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.console-output {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 0.5rem;
+  border-radius: 4px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.console-output pre {
+  margin: 0 0 0.25rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+.console-output pre.error {
+  color: #f48771;
+}
