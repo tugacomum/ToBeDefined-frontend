@@ -1,59 +1,69 @@
 // src/pages/home/JsCompiler.jsx
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import Editor from '@monaco-editor/react'
+import Interpreter from 'js-interpreter'
+import * as Babel from '@babel/standalone'
 import './CodeEditorJs.css'
 
 export default function CodeEditorJs() {
-  const iframeRef = useRef(null)
   const [code, setCode] = useState(`console.log("Olá, mundo!")`)
   const [logs, setLogs] = useState([])
 
   useEffect(() => {
-    const handleMessage = (event) => {
-      if (!event.data || (event.data.type !== 'log' && event.data.type !== 'error')) return
-      setLogs(logs => [...logs, {type: event.data.type, message: event.data.message }])
+    const div = document.getElementById('console-output')
+    if (div) {
+      div.scrollTop = div.scrollHeight
     }
-    window.addEventListener('message', handleMessage)
-    return () => {
-      window.removeEventListener('message', handleMessage)
-    }
-  }, [])
+  }, [logs])
 
 const runCode = () => {
     setLogs([])
 
-    const escapedCode = JSON.stringify(code)
-    
-    const srcDoc = `
-      <!DOCTYPE html>
-      <html lang="pt-PT">
-        <head><meta charset="utf-8"/></head>
-        <body>
-          <script>
-            const send = msg => parent.postMessage(msg, '*')
-            console.log = (...args) => send({ type: 'log', message: args.join(' ') })
-            console.error = (...args) => send({ type: 'error', message: args.join(' ') })
+    const addLog = (type, ...messages) => {
+      setLogs(logs => [...logs, { type, message: messages.map(String).join(' ') }])
+    }
 
-            let finished = false
-            setTimeout(() => {
-              if (!finished) {
-                console.error('Execution timeout.')
-              }
-            }, 2000)
+    let interpreter
+    try {
+      const es5 = Babel.transform(code, { presets: ['env'] }).code;
+      interpreter = new Interpreter(es5, (interp, global) => {
+        const consoleObj = interp.createObject(interp.OBJECT)
 
-            try {
-              new Function('console',${escapedCode})(console)
-            } catch (err) {
-              console.error(err.message)
-            } finally {
-              finished = true
-            }
-          </script>
-        </body>
-      </html>
-    `
-    iframeRef.current.srcdoc = srcDoc
+        const consoleMethods = (type) => interp.createNativeFunction(function () {
+          const msgs = Array.from(arguments).map(msg => interp.pseudoToNative(msg))
+          addLog(type, ...msgs)
+        })
+
+        interp.setProperty(consoleObj, 'log', consoleMethods('log'))
+        interp.setProperty(consoleObj, 'error', consoleMethods('error'))
+        interp.setProperty(global, 'console', consoleObj)
+      })
+    } catch (error) {
+      addLog('error', error.message || String(error))
+      return
+    }
+
+    const start = performance.now()
+    const TIMEOUT_MS = 2000
+    const STPER_PER_TICK = 1000
+
+    const interval = setInterval(() => {
+      try {
+        for (let i = 0; i < STPER_PER_TICK; i++) {
+          const hasMore = interpreter.step()
+          if (!hasMore) { clearInterval(interval); return }
+        }
+
+        if (performance.now() - start > TIMEOUT_MS) {
+          addLog('error', 'Execution timeout')
+          clearInterval(interval)
+        }
+      } catch (error) {
+        addLog('error', error.message || String(error))
+        clearInterval(interval)
+      }
+    },0)
   }
 
   return (
@@ -71,7 +81,7 @@ const runCode = () => {
       </div>
       <div className="console-pane">
         <h3>Console</h3>
-        <div className="console-output">
+        <div id='console-output' className="console-output ">
           {logs.map((entry, i) => (
             <pre key={i} className={entry.type}>
               {entry.message}
@@ -79,12 +89,6 @@ const runCode = () => {
           ))}
         </div>
       </div>
-      <iframe
-        ref={iframeRef}
-        title="js-poc"
-        sandbox="allow-scripts"
-        style={{ display: 'none' }}
-      />
     </div>
   )
 }
