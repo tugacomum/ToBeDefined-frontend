@@ -1,0 +1,114 @@
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+.jspoc-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.editor-pane,
+.console-pane {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 8px;
+}
+
+.editor-pane h3,
+.console-pane h3 {
+  margin: 0 0 .5rem;
+  font-size: 1rem;
+  flex: 0 0 auto;
+}
+
+.editor-pane {
+  overflow: hidden;
+}
+
+.editor-pane .monaco-editor,
+.editor-pane .monaco-editor * {
+  box-sizing: border-box;
+}
+
+.editor-pane .monaco-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.editor-pane button {
+  margin-top: .5rem;
+  align-self: flex-start;
+  padding: .5rem 1rem;
+  font-size: .9rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f6f6f6;
+  cursor: pointer;
+}
+
+.editor-pane button:hover {
+  background: #efefef;
+}
+
+.console-pane {
+  overflow: hidden;
+}
+
+.console-output {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: .5rem;
+  border-radius: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.console-output pre {
+  margin: 0 0 .25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.console-output pre.error {
+  color: #f48771;
+}
+
+@media (max-width: 900px) {
+  .jspoc-container {
+    flex-direction: column;
+    gap: .75rem;
+    padding: .75rem;
+  }
+
+  .editor-pane .monaco-editor {
+    height: 40dvh !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .jspoc-container {
+    gap: .5rem;
+  }
+
+  .editor-pane h3,
+  .console-pane h3 {
+    font-size: .95rem;
+  }
+
+  .editor-pane button {
+    padding: .45rem .85rem;
+    font-size: .85rem;
+  }
+}
