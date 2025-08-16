@@ -1,0 +1,154 @@
+@import url("@fontsource/poppins");
+@import "tailwindcss";
+
+
+/* General styles for the components */
+body {
+    font-family: "Poppins";
+    font-style: normal;
+    line-height: normal;
+}
+
+/* General styles for buttons */
+
+.largeButton {
+    display: inline-flex;
+    height: 56px;
+    padding: 14px 24px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background-color: #3B82F6;
+    color: #F1F5F9;
+}
+
+.largeButton:hover {
+    background: #2563EB;
+    box-shadow: 0 4px 7.7px 0 rgba(37, 99, 235, 0.24);
+}
+
+.largeButton:active {
+    background: #1D4ED8;
+}
+
+.largeButton:disabled {
+    background: #94A3B8;
+    cursor: not-allowed;
+}
+
+.MediumButton {
+    display: inline-flex;
+    padding: 8px 24px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    background: #3B82F6;
+    color: #F1F5F9;
+}
+
+.MediumButton:hover {
+    background: #2563EB;
+    box-shadow: 0 4px 7.7px 0 rgba(37, 99, 235, 0.24);
+}
+
+.MediumButton:active {
+    background: #1D4ED8;
+}
+
+.MediumButton:disabled {
+    background: #94A3B8;
+    cursor: not-allowed;
+}
+
+.SmallButton {
+    display: inline-flex;
+    padding: 6px 24px;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    border-radius: 6px;
+    background: #3B82F6;
+    color: #F1F5F9;
+}
+
+.SmallButton:hover {
+    background: #2563EB;
+    box-shadow: 0 4px 7.7px 0 rgba(37, 99, 235, 0.24);
+}
+
+.SmallButton:active {
+    background: #1D4ED8;
+}
+
+.SmallButton:disabled {
+    background: #94A3B8;
+    cursor: not-allowed;
+}
+
+.checkBox {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+input[type="checkbox"].checkBox {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #3B82F6;
+    border-radius: 6px;
+    background: #fff;
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    vertical-align: middle;
+    margin: 0;
+}
+
+input[type="checkbox"].checkBox:checked {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M8 12.5L11 15.5L16 9.5' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+
+}
+
+.backgroundLogin {
+    border-radius: 24px;
+    background: linear-gradient(0deg, rgba(11, 25, 45, .60), rgba(11, 25, 45, .60)), url('/images/auth/backgroundLogin.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.pr-15 {
+    padding-right: calc(var(--spacing) * 15.5); /* 3.875rem = 62px */
+}
+
+.pl-25{
+   padding-left: calc(var(--spacing) * 26); /* 6.5rem = 104px */
+}
+
+.w-25 {
+   width: calc(var(--spacing) * 24.6); /* 6.15rem = 98.4px */
+}
+
+.pr-30 {
+    padding-right: calc(var(--spacing) * 30); /* 7.5rem 120px */
+}
+
+.pl-31_5 {
+    padding-left: calc(var(--spacing) * 31.5); /* 7.875rem 126px */
+}
+
+.w-18 {
+    width: calc(var(--spacing, 0.25rem) * 18);   /* 72px = 0.25rem * 18 */
+}
+
+.h-26 {
+    height: calc(var(--spacing, 0.25rem) * 26);  /* 104px = 0.25rem * 26 */
+}

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import {api} from '../services/api';
 
 const AuthContext = createContext();
 
@@ -20,9 +21,17 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    localStorage.setItem('token', '123abc');
-    setUser(userData);
+  const login = (body) => {
+    api.post('/api/auth/login', body)
+      .then(response => {
+        const { token } = response.data.data;
+        localStorage.setItem('token', token);
+        setUser({ name: 'João', email: 'joao@example.com' });
+      })
+      .catch(error => {
+        console.error('Login failed:', error);
+        throw error;
+      });
   };
 
   const logout = () => {
