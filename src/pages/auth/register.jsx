@@ -1,3 +1,6 @@
+import '../../styles/ToBeDefinedStyle.css';
+
+
 const Register = () => {
     return (
         <div>

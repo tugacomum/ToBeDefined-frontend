@@ -2,7 +2,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import AuthRoutes from './auth.routes';
 import AppRoutes from './app.routes';
-import { useAuth } from '../contexts/auth';
+import { useAuth } from '../contexts/auth';3
 
 export default function Routes() {
     const { user } = useAuth();
