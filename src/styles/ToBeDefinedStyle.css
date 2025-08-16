@@ -9,6 +9,13 @@ body {
     line-height: normal;
 }
 
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-input-decoration {
+    display: none !important;
+}
+
 /* General styles for buttons */
 
 .largeButton {
