@@ -1,5 +1,66 @@
-@import url("@fontsource/poppins");
 @import "tailwindcss";
+
+/* Importando fontes Poppins em .ttf */
+@font-face {
+    font-family: 'Poppins';
+    src: url('/public/fonts/Poppins-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/public/fonts/Poppins-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/public/fonts/Poppins-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/public/fonts/Poppins-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/public/fonts/Poppins-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* Classes para diferentes pesos */
+.text-light {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+}
+
+.text-regular {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+}
+
+.text-medium {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+}
+
+.text-semibold {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.text-bold {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+}
 
 
 /* General styles for the components */
@@ -117,13 +178,27 @@ input[type="checkbox"].checkBox:checked {
 
 }
 
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-input-decoration {
+    display: none !important;
+}
+
 .backgroundLogin {
     border-radius: 24px;
-    background: linear-gradient(0deg, rgba(11, 25, 45, .60), rgba(11, 25, 45, .60)), url('/images/auth/backgroundLogin.png');
+    overflow: hidden;
+    background: 
+        linear-gradient(rgba(59, 130, 246, 0.75), rgba(59, 130, 246, 0.75)),
+        url('/images/auth/backgroundLogin.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
 }
+
+
 
 .pr-15 {
     padding-right: calc(var(--spacing) * 15.5); /* 3.875rem = 62px */
