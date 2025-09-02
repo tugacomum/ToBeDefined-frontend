@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   MailIcon,
@@ -7,10 +7,13 @@ import {
   ErrorInfoIcon,
   ArrowRight,
   Logo,
-  KeyIcon,
+  LockIcon,
   CheckBoxIcon,
   CheckedIcon,
   CircleWithCorrectIcon,
+  ArrowDown,
+  Laptop,
+  ArrowUp,
 } from "./icons";
 
 import { COLORS, SIZES } from "../styles/theme";
@@ -18,8 +21,8 @@ import "../styles/ToBeDefinedStyle.css";
 
 export const InputErrorMessage = ({ Message }) => (
   <div
-    className="flex flex-row items-center gap-1 rounded-md p-1 text-red-500 text-regular"
-    style={{ backgroundColor: COLORS.danger100, fontSize: SIZES.caption }}
+    className="flex flex-row p-1 items-center gap-1 text-red-500 text-regular"
+    style={{ fontSize: SIZES.caption }}
   >
     <ErrorInfoIcon />
     {Message}
@@ -191,7 +194,6 @@ export function Inputv2({
   onChange,
   error,
   onBlur,
-  touched,
   loginAttempted,
   placeHolder,
   keyIcon,
@@ -204,13 +206,9 @@ export function Inputv2({
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const hasError =
-    error ||
-    (type === "email" &&
-      (!emailRegex.test(value) || value.length === 0) &&
-      (touched || loginAttempted)) ||
-    (type === "password" &&
-      ((value.length > 0 && value.length < 8) ||
-        (value.length === 0 && (touched || loginAttempted))));
+  error || 
+  (type === "email" && (!emailRegex.test(value) || value.length === 0) && loginAttempted) ||
+  (type === "password" && (value.length === 0 || value.length < 8) && loginAttempted);
 
   const inputType = type === "password" && showPassword ? "text" : type;
 
@@ -220,10 +218,19 @@ export function Inputv2({
     inputRef.current?.focus();
   };
 
+  const isValid =
+    type === "email"
+      ? emailRegex.test(value) && value.length > 0
+      : type === "password"
+      ? value.length >= 8
+      : value.length > 0;
+
   const borderColor = hasError
     ? COLORS.danger
     : success
     ? COLORS.success
+    : isValid
+    ? COLORS.primary
     : isFocused
     ? COLORS.primary
     : COLORS.gray;
@@ -243,11 +250,19 @@ export function Inputv2({
       }}
     >
       {type === "email" ? (
-        <MailIcon IsFocused={isFocused && !hasError} HasError={hasError} />
+        <MailIcon
+          IsFocused={isFocused && !hasError}
+          HasError={hasError}
+          IsValid={isValid}
+        />
       ) : (
         keyIcon &&
         !success && (
-          <KeyIcon IsFocused={isFocused && !hasError} HasError={hasError} />
+          <LockIcon
+            IsFocused={isFocused && !hasError}
+            HasError={hasError}
+            IsValid={isValid}
+          />
         )
       )}
       <input
@@ -255,7 +270,7 @@ export function Inputv2({
         type={inputType}
         onChange={onChange}
         value={value}
-        className="flex-1 outline-none text-gray-900 text-regular"
+        className="flex-1 outline-none text-gray-900 placeholder-gray-400 text-regular"
         style={{ fontSize: SIZES.bodym }}
         placeholder={
           type === "email"
@@ -279,11 +294,13 @@ export function Inputv2({
               <OpenedEye
                 IsFocused={isFocused && !hasError}
                 HasError={hasError}
+                IsValid={isValid}
               />
             ) : (
               <ClosedEye
                 IsFocused={isFocused && !hasError}
                 HasError={hasError}
+                IsValid={isValid}
               />
             )}
           </div>
@@ -292,6 +309,172 @@ export function Inputv2({
     </div>
   );
 }
+
+export const CourseDropdown = ({
+  coursesByCategory,
+  onSelect,
+  courseError,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(null);
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredCategories = coursesByCategory
+    .map((cat) => {
+      const matchCategory = cat.category
+        .toLowerCase()
+        .includes(query.toLowerCase());
+
+      return {
+        category: cat.category,
+        courses: matchCategory
+          ? cat.courses
+          : cat.courses.filter((c) =>
+              c.title.toLowerCase().includes(query.toLowerCase())
+            ),
+      };
+    })
+    .filter(
+      (cat) =>
+        cat.courses.length > 0 ||
+        cat.category.toLowerCase().includes(query.toLowerCase())
+    );
+
+  const iconColor = courseError
+    ? "text-red-500"
+    : isOpen || selected
+    ? "text-blue-500"
+    : "text-gray-500";
+
+  const borderColor = courseError
+    ? "red"
+    : isOpen || selected
+    ? COLORS.primary
+    : COLORS.gray;
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <div
+        className={`flex items-center border rounded-md cursor-pointer`}
+        style={{
+          borderWidth: 1.5,
+          transition: "border-color 0.3s, box-shadow 0.3s",
+          borderColor,
+        }}
+      >
+        <Laptop
+          className={`ml-4 ${
+            courseError
+              ? "text-red-500"
+              : isOpen || selected
+              ? "text-blue-500"
+              : "text-gray-500"
+          }`}
+        />
+        {!isOpen ? (
+          <span
+            className={`flex-1 ${
+              !selected ? "text-gray-400" : "text-gray-900"
+            } select-none`}
+            style={{
+              fontSize: SIZES.bodym,
+              padding: 16,
+              paddingLeft: 8,
+            }}
+            onClick={() => setIsOpen(true)}
+          >
+            {selected ? selected.title : "Escolhe o teu curso"}
+          </span>
+        ) : (
+          <input
+            type="text"
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="flex-1 bg-transparent outline-none text-gray-900"
+            style={{
+              fontSize: SIZES.bodym,
+              padding: 16,
+              paddingLeft: 8,
+            }}
+          />
+        )}
+        {isOpen ? (
+          <ArrowUp
+            className={`mr-4 cursor-pointer ${iconColor}`}
+            onClick={() => setIsOpen(false)}
+          />
+        ) : (
+          <ArrowDown
+            className={`mr-4 cursor-pointer ${iconColor}`}
+            onClick={() => setIsOpen(true)}
+          />
+        )}
+      </div>
+      {isOpen && (
+        <ul
+          className={`absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg max-h-48 overflow-y-auto custom-scrollbar`}
+          style={{ borderWidth: 1.5, padding: "16px 8px", borderColor }}
+        >
+          {filteredCategories.map((cat, index) => (
+            <li
+              key={cat.category}
+              className={`flex flex-col gap-2 ${index !== 0 ? "mt-2" : ""}`}
+            >
+              <div
+                className="font-semibold text-gray-900"
+                style={{ fontSize: SIZES.caption, padding: "0 4px" }}
+              >
+                {cat.category}
+              </div>
+              <div className="flex flex-col gap-2">
+                {cat.courses.map((course) => {
+                  const isSelected = selected?.id === course.id;
+                  return (
+                    <div
+                      key={course.id}
+                      className={`cursor-pointer text-regular ${
+                        isSelected
+                          ? "bg-blue-100 text-gray-500"
+                          : "hover:bg-gray-100 text-gray-500"
+                      }`}
+                      style={{
+                        fontSize: SIZES.bodys,
+                        padding: "4px 8px",
+                        borderRadius: 6,
+                      }}
+                      onClick={() => {
+                        setSelected(course);
+                        setQuery("");
+                        setIsOpen(false);
+                        onSelect(course);
+                      }}
+                    >
+                      {course.title}
+                    </div>
+                  );
+                })}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 {
   /* apenas para teste de componentes */
@@ -324,7 +507,7 @@ const Components = () => {
           <ArrowRight />
         </span>
       </button>
-      {checkBox("Lembra-me", () => console.log("Checkbox toggled"))}
+      {checkBox("Lembra-me", () => {})}
     </div>
   );
 };

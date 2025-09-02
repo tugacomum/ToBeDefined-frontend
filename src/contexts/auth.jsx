@@ -17,12 +17,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkToken = async () => {
-    const token = localStorage.getItem("11token");
+    const token = localStorage.getItem("token");
     if (token) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      const user = await api.get("/api/auth/profile").then((r) => r.data.data);
-      setUser(user);
+      try {
+        const user = await api
+          .get("/api/auth/profile")
+          .then((r) => r.data.data);
+        setUser(user);
+      } catch (err) {
+        console.error("Token inválido ou expirado:", err.response?.data?.error);
+        logout();
+      }
     }
 
     setLoading(false);
@@ -40,6 +47,16 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const register = async (body) => {
+    try {
+      const res = await api.post("/api/auth/register", body);
+      return res.data;
+    } catch (error) {
+      console.error("Register failed:", error);
+      throw new Error("Erro ao registar o utilizador");
+    }
+  }
+
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
@@ -47,8 +64,8 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, login, logout, register }}>
+      {loading ? <div>Carregando...</div> : children}
     </AuthContext.Provider>
   );
 }

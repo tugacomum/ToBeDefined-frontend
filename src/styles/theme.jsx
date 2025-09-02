@@ -1,4 +1,5 @@
 export const SIZES = {
+  small: 10,
   caption: 12,
   bodyl: 18,
   bodym: 16,
