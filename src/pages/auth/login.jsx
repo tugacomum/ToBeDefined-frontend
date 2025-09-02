@@ -1,145 +1,201 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-
+import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/auth";
-import { CheckBox, Input, LogoAndName } from "../../components/components";
-import { MailIcon, ArrowRight, KeyIcon } from "../../components/icons";
-
-import "../../styles/ToBeDefinedStyle.css";
+import {
+  CheckBoxv2,
+  InputErrorMessage,
+  Inputv2,
+  LogoAndName,
+} from "../../components/components";
+import { ArrowRight } from "../../components/icons";
+import { COLORS, SIZES } from "../../styles/theme";
 
 const Login = () => {
+  const { login } = useAuth();
+
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [hasErrorEmail, setHasErrorEmail] = useState(false);
-  const [hasErrorPassword, setHasErrorPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [loginAttempted, setLoginAttempted] = useState(false);
+
+  const validateEmail = (email) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
+  const isFormValid =
+    email.length > 0 && password.length > 7 && validateEmail(email);
 
   const handleLogin = async () => {
-    const invalidEmail =
-      email.trim() === "" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    const invalidPassword = password.trim() === "";
+    setLoginAttempted(true);
+    setLoginError("");
+    let hasError = false;
 
-    setHasErrorEmail(invalidEmail);
-    setHasErrorPassword(invalidPassword);
+    if (!email || !validateEmail(email)) hasError = true;
+    if (!password) hasError = true;
 
-    if (invalidEmail || invalidPassword) return;
+    if (hasError) return;
 
     try {
-      const body = {
-        email: email.trim(),
-        password: password.trim(),
-      };
-      await login(body);
-      navigate("/home", { replace: true });
+      await login({ email: email.trim(), password: password.trim() });
     } catch (error) {
-      console.error("Login failed:", error);
+      setLoginError(error.message);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <div className="flex flex-col justify-center items-center w-1/2 h-screen max-h-screen">
-        <div className="flex min-h-screen bg-white">
-  {/* Lado esquerdo */}
-  <div className="w-1/2 h-screen p-6">
-    <div className="w-full h-full backgroundLogin flex flex-col justify-center px-12">
-
-      <LogoAndName />
-      <div className="mt-10">
-        <h1 className="text-4xl text-white font-bold leading-snug">
-          Unlock Your Learning Potential
-        </h1>
-        <p className="mt-4 text-lg font-medium text-gray-100 max-w-md">
-          Inicia sessão para continuares a tua jornada de crescimento e conhecimento.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  {/* Lado direito */}
-  <div className="flex flex-col justify-center items-center w-1/2 px-8">
-    {/* resto do formulário */}
-  </div>
-</div>
-
-      </div>
-
-      <div className="flex flex-col justify-center items-center w-1/2 px-8">
-        <div className="w-full pl-31_5 pr-30">
-          <h2 className="text-4xl font-bold mb-2.5 text-gray-900">
-            Bem vindo de volta!
-          </h2>
-          <p className="text-lg font-normal mb-8 text-gray-400">
-            Faz login na tua conta e retoma o teu estudo organizado.
-          </p>
-          <form>
-            <div className="space-y-6">
-              <div>
-                {Input(
-                  "Email",
-                  "Introduz o teu email institucional",
-                  false,
-                  true,
-                  null,
-                  <MailIcon HasError={hasErrorEmail} />,
-                  hasErrorEmail,
-                  email.trim === "" ? "Preencha o email" : "Email inválido",
-                  email,
-                  (e) => {
-                    setEmail(e.target.value);
-                    if (hasErrorEmail) setHasErrorEmail(false);
-                  },
-                  false
-                )}
-              </div>
-              <div>
-                {Input(
-                  "Password",
-                  "Enter your password",
-                  false,
-                  true,
-                  null,
-                  <KeyIcon HasError={hasErrorPassword} />,
-                  hasErrorPassword,
-                  password.trim === ""
-                    ? "Preencha a password"
-                    : "Password incorreta",
-                  password,
-                  (e) => {
-                    setPassword(e.target.value);
-                    if (hasErrorPassword) setHasErrorPassword(false);
-                  },
-                  true
-                )}
-              </div>
+    <div className="flex w-full h-screen overflow-hidden">
+      <div className="flex-1 p-4">
+        <div
+          className="w-full h-full rounded-3xl overflow-hidden flex flex-col justify-center"
+          style={{
+            backgroundImage: `linear-gradient(rgba(59,130,246,0.8), rgba(59,130,246,0.8)), url('/images/auth/backgroundLogin.jpg')`,
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+          }}
+        >
+          <div className="flex flex-col gap-8 items-start px-[104px] pr-[62px]">
+            <LogoAndName />
+            <div className="flex flex-col gap-2">
+              <h1
+                className="font-bold text-white"
+                style={{ fontSize: SIZES.h1 }}
+              >
+                Unlock Your Learning Potential
+              </h1>
+              <h3
+                className="font-medium text-slate-200"
+                style={{ fontSize: SIZES.h3 }}
+              >
+                Inicia sessão para continuares a tua jornada de crescimento e
+                conhecimento.
+              </h3>
             </div>
-            <div className="mt-2">
-              <div className="flex items-center justify-between">
-                {CheckBox("Lembra-me", () => setRememberMe(!rememberMe))}
-                <Link to="/forgotPassword" className="text-xs text-blue-500">
-                  Esqueceste-te da password?
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex flex-col gap-8 w-full max-w-[480px]">
+          <div className="flex flex-col gap-2.5">
+            <h1
+              className="text-gray-900 font-bold"
+              style={{ fontSize: SIZES.h1 }}
+            >
+              Bem vindo de volta!
+            </h1>
+            <p
+              className="text-gray-400 font-regular"
+              style={{ fontSize: SIZES.bodyl }}
+            >
+              Faz login na tua conta e retoma o teu estudo organizado.
+            </p>
+          </div>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
+                <p
+                  className="text-gray-900 font-medium"
+                  style={{ fontSize: SIZES.bodys }}
+                >
+                  Email
+                </p>
+                <Inputv2
+                  keyIcon={true}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  loginAttempted={loginAttempted}
+                />
+              </div>
+              {!validateEmail(email) && loginAttempted && (
+                <InputErrorMessage Message="Email inválido." />
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
+                <p
+                  className="text-gray-900 font-medium"
+                  style={{ fontSize: SIZES.bodys }}
+                >
+                  Password
+                </p>
+                <Inputv2
+                  keyIcon={true}
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  loginAttempted={loginAttempted}
+                  error={!!loginError}
+                />
+              </div>
+              {(loginError || (loginAttempted && password.length === 0)) && (
+                <InputErrorMessage
+                  Message={
+                    loginError
+                      ? "Credenciais incorretas."
+                      : "A password é obrigatória."
+                  }
+                />
+              )}
+              <div className="flex justify-between items-center mt-1">
+                <div className="flex items-center gap-1">
+                  <CheckBoxv2
+                    checked={rememberMe}
+                    onChange={() => setRememberMe(!rememberMe)}
+                  />
+                  <p
+                    className="text-gray-500 font-regular"
+                    style={{ fontSize: SIZES.caption }}
+                  >
+                    Lembra-me
+                  </p>
+                </div>
+                <Link
+                  to="/forgotPasswordv2"
+                  className="font-regular cursor-pointer"
+                  style={{ fontSize: SIZES.caption, color: COLORS.primary }}
+                >
+                  Não te lembras da password?
                 </Link>
               </div>
-              <button
-                type="button"
-                onClick={handleLogin}
-                className="largeButton w-full mt-8"
-              >
-                Login
-                <span className="ml-2 align-middle">
-                  <ArrowRight />
-                </span>{" "}
-              </button>
             </div>
-          </form>
-          <div className="mt-6 text-center font-normal text-xs text-gray-900">
-            Ainda não tens conta?{" "}
-            <Link to="/register" className="font-semibold text-blue-500">
-              Faz registo
-            </Link>
+          </div>
+          <div className="flex flex-col gap-6 text-center">
+            <button
+              onClick={handleLogin}
+              disabled={!isFormValid}
+              className={`flex items-center justify-center gap-2 rounded-md ${
+                isFormValid ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
+              style={{
+                backgroundColor: isFormValid ? COLORS.primary : COLORS.gray,
+                padding: "14px 24px",
+                transition: "background-color 0.3s",
+              }}
+            >
+              <p
+                className="text-gray-100 font-semibold"
+                style={{ fontSize: SIZES.bodyl }}
+              >
+                Iniciar Sessão
+              </p>
+              <ArrowRight />
+            </button>
+            <div
+              className="flex justify-center items-center gap-1 text-gray-900 font-regular"
+              style={{ fontSize: SIZES.caption }}
+            >
+              Ainda não tens conta?
+              <Link
+                to="/register"
+                className="text-primary font-semibold cursor-pointer"
+                style={{ color: COLORS.primary }}
+              >
+                Regista-te
+              </Link>
+            </div>
           </div>
         </div>
       </div>

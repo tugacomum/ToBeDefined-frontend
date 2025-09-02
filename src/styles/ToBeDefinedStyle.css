@@ -3,35 +3,35 @@
 /* Importando fontes Poppins em .ttf */
 @font-face {
     font-family: 'Poppins';
-    src: url('/public/fonts/Poppins-Light.ttf') format('truetype');
+    src: url('/fonts/Poppins-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Poppins';
-    src: url('/public/fonts/Poppins-Regular.ttf') format('truetype');
+    src: url('/fonts/Poppins-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Poppins';
-    src: url('/public/fonts/Poppins-Medium.ttf') format('truetype');
+    src: url('/fonts/Poppins-Medium.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Poppins';
-    src: url('/public/fonts/Poppins-SemiBold.ttf') format('truetype');
+    src: url('/fonts/Poppins-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Poppins';
-    src: url('/public/fonts/Poppins-Bold.ttf') format('truetype');
+    src: url('/fonts/Poppins-Bold.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
 }
@@ -62,12 +62,31 @@
     font-weight: 700;
 }
 
-
-/* General styles for the components */
 body {
     font-family: "Poppins";
     font-style: normal;
     line-height: normal;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #9CA3AF; 
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-button,
+.custom-scrollbar::-webkit-scrollbar-corner {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* General styles for buttons */
