@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -15,8 +15,11 @@ const ForgotPassword = () => {
   const [hasErrorCode, setHasErrorCode] = useState(false);
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [currentStep, setCurrentStep] = useState(1);
+  const [canResend, setCanResend] = useState(true);
+  const [countdown, setCountdown] = useState(0);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,6 +37,18 @@ const ForgotPassword = () => {
   const isFormValid = email.length > 0 && validateEmail(email);
   const isOtpComplete = otp.every((digit) => digit !== "");
 
+  useEffect(() => {
+    let timer;
+    if (!canResend && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(timer);
+  }, [canResend, countdown]);
+
   const step1 = async () => {
     setEmailTouched(true);
 
@@ -50,58 +65,111 @@ const ForgotPassword = () => {
     }
   };
 
-  const step2 = () => {
-    const isValid = otp.every((digit) => /^\d$/.test(digit));
-    if (!isValid) return;
-
+  const step2 = async () => {
     try {
       const body = { email: email.trim(), code: otp.join("") };
-      api
-        .post("/api/auth/verify-reset-code", body)
-        .then((res) => {
-          setResetToken(res.data.data.resetToken);
-          setHasErrorCode(false);
-          setCurrentStep(3);
-        })
-        .catch(() => {
-          setHasErrorCode(true);
-        });
+      const res = await api.post("/api/auth/verify-reset-code", body);
+
+      if (res.data.success) {
+        setResetToken(res.data.data.resetToken);
+        setHasErrorCode(false);
+        setErrorMessage("");
+        setCurrentStep(3);
+      } else {
+        setHasErrorCode(true);
+        setErrorMessage(res.data.error);
+      }
     } catch (error) {
-      console.error("Error verifying reset code:", error);
+      setHasErrorCode(true);
+      setErrorMessage(
+        error.response?.data?.error || "Ocorreu um erro, tenta novamente"
+      );
     }
   };
 
-  const step3 = () => {
+  const step3 = async () => {
+    if (password.length < 8) {
+      setErrorMessage("A password deve ter pelo menos 8 caracteres.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMessage("As passwords não coincidem.");
+      return;
+    }
+
     if (!resetToken) return;
 
     try {
       const body = { token: resetToken, newPassword: password };
-      api
-        .post("/api/auth/reset-password", body)
-        .then(() => setCurrentStep(4))
-        .catch((error) => {
-          console.error("Error resetting password:", error);
-        });
+      await api.post("/api/auth/reset-password", body);
+      setErrorMessage("");
+      setCurrentStep(4);
     } catch (error) {
-      console.error("Error resetting password:", error);
+      setErrorMessage("Erro ao redefinir a password. Tenta novamente.");
     }
+  };
+
+  const handleOtpPaste = (e, startIndex) => {
+    e.preventDefault();
+    const raw = (e.clipboardData || window.clipboardData).getData("text") || "";
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) return;
+
+    const newOtp = [...otp];
+    const toFill = digits.slice(0, 6 - startIndex).split("");
+    toFill.forEach((d, i) => (newOtp[startIndex + i] = d));
+    setOtp(newOtp);
+
+    const nextIndex = startIndex + toFill.length;
+    if (nextIndex < 6) otpRefs.current[nextIndex]?.focus();
+    else otpRefs.current[5]?.focus();
+
+    if (hasErrorCode) setHasErrorCode(false);
   };
 
   const handleOtpChange = (e, index) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
     const newOtp = [...otp];
-    newOtp[index] = value ? value[0] : "";
+    newOtp[index] = value.slice(-1);
     setOtp(newOtp);
 
     if (hasErrorCode) setHasErrorCode(false);
-
-    if (index < 5 && value) otpRefs.current[index + 1]?.focus();
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
   };
 
   const handleOtpBackspace = (e, index) => {
-    if (hasErrorCode) setHasErrorCode(false);
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
+    if (e.key === "Backspace") {
+      const newOtp = [...otp];
+      if (otp[index]) {
+        newOtp[index] = "";
+        setOtp(newOtp);
+      } else if (index > 0) {
+        otpRefs.current[index - 1]?.focus();
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
+      }
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const res = await api.post("/api/auth/resend-reset-password-code", {
+        email,
+      });
+
+      if (res.data.success) {
+        setOtp(Array(6).fill(""));
+        otpRefs.current[0]?.focus();
+        setCanResend(false);
+        setCountdown(30);
+        setErrorMessage("");
+        setHasErrorCode(false);
+      }
+    } catch (err) {
+      const apiError = err.response?.data?.error;
+      setErrorMessage(apiError || "Insira o código enviado anteriormente.");
+      setHasErrorCode(true);
+      setCanResend(true);
     }
   };
 
@@ -183,15 +251,13 @@ const ForgotPassword = () => {
                     >
                       Redefinição da password
                     </h1>
-                    <p
+                    <div
                       className="text-gray-400 font-regular"
                       style={{ fontSize: SIZES.bodyl }}
                     >
-                      Enviámos um email para{" "}
-                      <span className="text-semibold text-gray-700">
-                        {email}
-                      </span>
-                    </p>
+                      Introduz o código que enviámos para o teu email.
+                      <p>É válido por 30 segundos</p>
+                    </div>
                   </>
                 )}
                 {currentStep === 3 && (
@@ -230,10 +296,11 @@ const ForgotPassword = () => {
                       />
                     </div>
                     <div>
-                      {!validateEmail(email) &&
-                        (emailTouched || email.length > 0) && (
-                          <InputErrorMessage Message="Email inválido." />
-                        )}
+                      {!validateEmail(email) && emailTouched && (
+                        <InputErrorMessage
+                          Message={errorMessage || "Código incorreto."}
+                        />
+                      )}
                     </div>
                   </div>
                   <button
@@ -258,7 +325,7 @@ const ForgotPassword = () => {
                     </p>
                   </button>
                   <div className="w-full flex justify-center">
-                    <Link to="/loginv2">
+                    <Link to="/login">
                       <p
                         className="flex items-center text-regular text-gray-500"
                         style={{ fontSize: SIZES.caption }}
@@ -283,24 +350,27 @@ const ForgotPassword = () => {
                           pattern="\d*"
                           maxLength={1}
                           className={`flex-1 text-center rounded-lg p-4 text-gray-900 font-bold border-[1.5px]
-          ${
-            hasErrorCode
-              ? "border-red-500 focus:border-red-500"
-              : otp[index]
-              ? "border-blue-500 focus:border-blue-500"
-              : "border-gray-300 focus:border-blue-500"
-          } focus:outline-none`}
+                        ${
+                          hasErrorCode
+                            ? "border-red-500 focus:border-red-500"
+                            : otp[index]
+                            ? "border-blue-500 focus:border-blue-500"
+                            : "border-gray-300 focus:border-blue-500"
+                        } focus:outline-none`}
                           aria-invalid={hasErrorCode}
                           style={{ fontSize: SIZES.display, minWidth: 0 }}
                           value={otp[index] || ""}
                           onChange={(e) => handleOtpChange(e, index)}
                           onKeyDown={(e) => handleOtpBackspace(e, index)}
+                          onPaste={(e) => handleOtpPaste(e, index)}
                           ref={(el) => (otpRefs.current[index] = el)}
                         />
                       ))}
                     </div>
                     {hasErrorCode && (
-                      <InputErrorMessage Message="Código incorreto." />
+                      <InputErrorMessage
+                        Message={errorMessage || "Código incorreto."}
+                      />
                     )}
                   </div>
                   <button
@@ -329,8 +399,17 @@ const ForgotPassword = () => {
                     style={{ fontSize: SIZES.caption, gap: 4 }}
                   >
                     Não recebeste o email?
-                    <span className="cursor-pointer text-blue-500 font-semibold">
-                      Clica aqui para reenviar
+                    <span
+                      className={`cursor-pointer text-blue-500 font-semibold ${
+                        !canResend ? "pointer-events-none opacity-50" : ""
+                      }`}
+                      onClick={canResend ? handleResendCode : undefined}
+                    >
+                      {!canResend
+                        ? `Tente novamente em ${countdown} ${
+                            countdown === 1 ? "segundo" : "segundos"
+                          }`
+                        : "Clica aqui para reenviar"}
                     </span>
                   </p>
                 </div>
@@ -338,83 +417,45 @@ const ForgotPassword = () => {
               {currentStep === 3 && (
                 <div className="flex flex-col w-full max-w-[480px] self-center items-center gap-6">
                   <div className="flex flex-col w-full gap-1">
-                    <div className="flex flex-col gap-2">
-                      <p
-                        className="text-gray-900 font-medium"
-                        style={{ fontSize: SIZES.bodys }}
-                      >
-                        Password
-                      </p>
-                      <Inputv2
-                        keyIcon={false}
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onBlur={() => setPasswordBlurred(true)}
-                        touched={passwordBlurred || password.length > 0}
-                        error={
-                          (passwordBlurred || password.length > 0) &&
-                          password.length < 8
-                            ? "A password deve ter pelo menos 8 caracteres."
-                            : null
-                        }
-                      />
-                    </div>
-                    {(passwordBlurred || password.length > 0) &&
-                      password.length < 8 && (
-                        <InputErrorMessage Message="A password deve ter pelo menos 8 caracteres." />
-                      )}
+                    <p
+                      className="text-gray-900 font-medium"
+                      style={{ fontSize: SIZES.bodys }}
+                    >
+                      Password
+                    </p>
+                    <Inputv2
+                      keyIcon={false}
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
                   </div>
                   <div className="flex flex-col w-full gap-1">
-                    <div className="flex flex-col gap-2">
-                      <p
-                        className="text-gray-900 font-medium"
-                        style={{ fontSize: SIZES.bodys }}
-                      >
-                        Confirma a password
-                      </p>
-                      <Inputv2
-                        keyIcon={false}
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        onBlur={() => setConfirmPasswordBlurred(true)}
-                        touched={
-                          confirmPasswordBlurred || confirmPassword.length > 0
-                        }
-                        placeHolder="Introduz novamente a tua nova password"
-                        error={
-                          (confirmPasswordBlurred ||
-                            confirmPassword.length > 0) &&
-                          (confirmPassword !== password || password.length < 8)
-                            ? "As passwords não coincidem ou a password principal é muito curta."
-                            : null
-                        }
-                        success={
-                          confirmPassword === password && password.length >= 8
-                        }
-                      />
-                    </div>
-                    {(confirmPasswordBlurred || confirmPassword.length > 0) &&
-                      (confirmPassword !== password || password.length < 8) && (
-                        <InputErrorMessage Message="As passwords não coincidem ou a password principal é muito curta." />
-                      )}
+                    <p
+                      className="text-gray-900 font-medium"
+                      style={{ fontSize: SIZES.bodys }}
+                    >
+                      Confirma a password
+                    </p>
+                    <Inputv2
+                      keyIcon={false}
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeHolder="Introduz novamente a tua nova password"
+                      success={
+                        confirmPassword === password && password.length >= 8
+                      }
+                    />
                   </div>
+
+                  {errorMessage && <InputErrorMessage Message={errorMessage} />}
+
                   <button
                     onClick={step3}
-                    disabled={
-                      password.length < 8 || password !== confirmPassword
-                    }
-                    className={`flex items-center justify-center gap-2 rounded-md w-full ${
-                      password.length >= 8 && password === confirmPassword
-                        ? "cursor-pointer"
-                        : "cursor-not-allowed"
-                    }`}
+                    className={`flex items-center justify-center gap-2 rounded-md w-full cursor-pointer`}
                     style={{
-                      backgroundColor:
-                        password.length >= 8 && password === confirmPassword
-                          ? COLORS.primary
-                          : COLORS.gray,
+                      backgroundColor: COLORS.primary,
                       padding: "14px 24px",
                       transition: "background-color 0.3s",
                     }}
@@ -446,7 +487,7 @@ const ForgotPassword = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => (window.location.href = "/loginv2")}
+                    onClick={() => (window.location.href = "/login")}
                     className="flex items-center justify-center gap-2 rounded-md w-full cursor-pointer"
                     style={{
                       backgroundColor: COLORS.primary,

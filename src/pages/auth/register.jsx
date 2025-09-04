@@ -61,7 +61,11 @@ const Register = () => {
         navigate("/verifyEmail", { state: { userId: res.userId } });
       }
     } catch (err) {
-      setPasswordError("Credenciais incorretas.");
+      if (err.error === "Email já registado") {
+        setPasswordError("O email já está a ser utilizado.");
+      } else {
+        setPasswordError("Credenciais incorretas.");
+      }
     }
   };
 

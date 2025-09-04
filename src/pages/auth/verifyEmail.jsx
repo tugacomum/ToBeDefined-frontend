@@ -16,7 +16,8 @@ const VerifyEmail = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { userId } = location.state || {};
+  const { userId, email: emailFromState } = location.state || {};
+  const usingEmail = !!emailFromState;
 
   const otpRefs = useRef([]);
   const isOtpComplete = otp.every((digit) => digit !== "");
@@ -53,16 +54,30 @@ const VerifyEmail = () => {
 
   const handleResendCode = async () => {
     try {
-      const res = await api.post("/api/auth/resend-verification-code", {
-        userId,
-      });
-      if (res.data.success) {
-        setOtp(Array(6).fill(""));
-        otpRefs.current[0]?.focus();
-        setCanResend(false);
-        setCountdown(30);
-        setErrorMessage("");
-        setHasErrorCode(false);
+      if (usingEmail) {
+        const res = await api.post("/api/auth/resend-verification-email", {
+          email: emailFromState,
+        });
+        if (res.data.success) {
+          setOtp(Array(6).fill(""));
+          otpRefs.current[0]?.focus();
+          setCanResend(false);
+          setCountdown(30);
+          setErrorMessage("");
+          setHasErrorCode(false);
+        }
+      } else {
+        const res = await api.post("/api/auth/resend-verification-code", {
+          userId,
+        });
+        if (res.data.success) {
+          setOtp(Array(6).fill(""));
+          otpRefs.current[0]?.focus();
+          setCanResend(false);
+          setCountdown(30);
+          setErrorMessage("");
+          setHasErrorCode(false);
+        }
       }
     } catch (err) {
       setErrorMessage(
@@ -101,8 +116,17 @@ const VerifyEmail = () => {
 
   const handleVerifyEmail = async () => {
     try {
-      const body = { userId, code: otp.join("") };
-      const res = await api.post("/api/auth/verify-email", body);
+      const body = {
+        code: otp.join(""),
+        ...(usingEmail ? { email: emailFromState } : { userId }),
+      };
+
+      const res = await api.post(
+        usingEmail
+          ? "/api/auth/verify-email-by-email"
+          : "/api/auth/verify-email",
+        body
+      );
 
       if (res.data.success) {
         setSuccess(true);
