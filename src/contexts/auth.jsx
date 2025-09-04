@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkToken = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token1");
     if (token) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
@@ -48,14 +48,20 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (body) => {
-    try {
-      const res = await api.post("/api/auth/register", body);
-      return res.data;
-    } catch (error) {
-      console.error("Register failed:", error);
-      throw new Error("Erro ao registar o utilizador");
+  try {
+    const res = await api.post("/api/auth/register", body);
+    return res.data;
+  } catch (error) {
+    console.error("Register failed:", error);
+
+    if (error.response?.data) {
+      throw error.response.data;
     }
+    
+    throw new Error("Erro ao registar o utilizador");
   }
+};
+
 
   const logout = () => {
     localStorage.removeItem("token");

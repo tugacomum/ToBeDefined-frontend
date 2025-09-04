@@ -153,7 +153,7 @@ const Login = () => {
                   </p>
                 </div>
                 <Link
-                  to="/forgotPasswordv2"
+                  to="/forgotPassword"
                   className="font-regular cursor-pointer"
                   style={{ fontSize: SIZES.caption, color: COLORS.primary }}
                 >

@@ -13,7 +13,7 @@ export default function AuthRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/terms" element={<Terms />} />
       <Route path='/verifyEmail' element={<VerifyEmail />} />
-      <Route path="*" element={<Navigate to="/loginv2" />} />
+      <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
 };

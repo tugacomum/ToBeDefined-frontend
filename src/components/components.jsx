@@ -206,9 +206,13 @@ export function Inputv2({
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const hasError =
-  error || 
-  (type === "email" && (!emailRegex.test(value) || value.length === 0) && loginAttempted) ||
-  (type === "password" && (value.length === 0 || value.length < 8) && loginAttempted);
+    error ||
+    (type === "email" &&
+      (!emailRegex.test(value) || value.length === 0) &&
+      loginAttempted) ||
+    (type === "password" &&
+      (value.length === 0 || value.length < 8) &&
+      loginAttempted);
 
   const inputType = type === "password" && showPassword ? "text" : type;
 
@@ -368,15 +372,28 @@ export const CourseDropdown = ({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
-        className={`flex items-center border rounded-md cursor-pointer`}
+        className={`flex items-center border rounded-md ${
+          !isOpen ? "cursor-pointer" : "cursor-default"
+        }`}
         style={{
           borderWidth: 1.5,
           transition: "border-color 0.3s, box-shadow 0.3s",
           borderColor,
         }}
+        tabIndex={0}
+        onClick={() => {
+          if (!isOpen) setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setIsOpen(true);
+          if (e.key === "Escape") setIsOpen(false);
+        }}
+        role="combobox"
+        aria-expanded={isOpen}
       >
         <Laptop
-          className={`ml-4 ${
+          className={`cursor-default ml-4 ${
             courseError
               ? "text-red-500"
               : isOpen || selected
@@ -429,47 +446,60 @@ export const CourseDropdown = ({
           className={`absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg max-h-48 overflow-y-auto custom-scrollbar`}
           style={{ borderWidth: 1.5, padding: "16px 8px", borderColor }}
         >
-          {filteredCategories.map((cat, index) => (
-            <li
-              key={cat.category}
-              className={`flex flex-col gap-2 ${index !== 0 ? "mt-2" : ""}`}
-            >
-              <div
-                className="font-semibold text-gray-900"
-                style={{ fontSize: SIZES.caption, padding: "0 4px" }}
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((cat, index) => (
+              <li
+                key={cat.category}
+                className={`flex flex-col gap-2 ${index !== 0 ? "mt-2" : ""}`}
               >
-                {cat.category}
-              </div>
-              <div className="flex flex-col gap-2">
-                {cat.courses.map((course) => {
-                  const isSelected = selected?.id === course.id;
-                  return (
-                    <div
-                      key={course.id}
-                      className={`cursor-pointer text-regular ${
-                        isSelected
-                          ? "bg-blue-100 text-gray-500"
-                          : "hover:bg-gray-100 text-gray-500"
-                      }`}
-                      style={{
-                        fontSize: SIZES.bodys,
-                        padding: "4px 8px",
-                        borderRadius: 6,
-                      }}
-                      onClick={() => {
-                        setSelected(course);
-                        setQuery("");
-                        setIsOpen(false);
-                        onSelect(course);
-                      }}
-                    >
-                      {course.title}
-                    </div>
-                  );
-                })}
-              </div>
-            </li>
-          ))}
+                <div
+                  className="font-semibold text-gray-900"
+                  style={{ fontSize: SIZES.caption, padding: "0 4px" }}
+                >
+                  {cat.category}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {cat.courses.map((course) => {
+                    const isSelected = selected?.id === course.id;
+                    return (
+                      <div
+                        key={course.id}
+                        className={`cursor-pointer text-regular ${
+                          isSelected
+                            ? "bg-blue-100 text-gray-500"
+                            : "hover:bg-gray-100 text-gray-500"
+                        }`}
+                        style={{
+                          fontSize: SIZES.bodys,
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                        }}
+                        onClick={() => {
+                          setSelected(course);
+                          setQuery("");
+                          setIsOpen(false);
+                          onSelect(course);
+                        }}
+                      >
+                        {course.title}
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            ))
+          ) : (
+            <div
+              className="text-gray-500"
+              style={{
+                fontSize: SIZES.bodys,
+                padding: "4px 8px",
+                borderRadius: 6,
+              }}
+            >
+              Não existe nenhum curso com o nome "{query}".
+            </div>
+          )}
         </ul>
       )}
     </div>
