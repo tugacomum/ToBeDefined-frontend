@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/auth";
 import {
   CheckBoxv2,
@@ -9,9 +9,12 @@ import {
 } from "../../components/components";
 import { ArrowRight } from "../../components/icons";
 import { COLORS, SIZES } from "../../styles/theme";
+import { api } from "../../services/api";
 
 const Login = () => {
   const { login } = useAuth();
+
+  const navigate = useNavigate();
 
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -41,7 +44,34 @@ const Login = () => {
     try {
       await login({ email: email.trim(), password: password.trim() });
     } catch (error) {
-      setLoginError(error.message);
+      if (error.message === "Email não verificado") {
+        setLoginError("EMAIL_NOT_VERIFIED");
+      } else {
+        setLoginError("INVALID_CREDENTIALS");
+      }
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email || !validateEmail(email)) {
+      alert("Por favor, insira um email válido para reenviar o código.");
+      return;
+    }
+
+    try {
+      const response = await api.post("/api/auth/resend-verification-email", {
+        email,
+      });
+
+      const data = await response.data;
+
+      if (data.success) {
+        navigate("/verifyEmail", { state: { email } });
+      } else {
+        console.error(`Erro: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao reenviar o email de verificação:", error);
     }
   };
 
@@ -127,10 +157,11 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   loginAttempted={loginAttempted}
-                  error={!!loginError}
+                  error={loginError === "INVALID_CREDENTIALS"}
                 />
               </div>
-              {(loginError || (loginAttempted && password.length === 0)) && (
+              {(loginError === "INVALID_CREDENTIALS" ||
+                (loginAttempted && password.length === 0)) && (
                 <InputErrorMessage
                   Message={
                     loginError
@@ -163,26 +194,43 @@ const Login = () => {
             </div>
           </div>
           <div className="flex flex-col gap-6 text-center">
-            <button
-              onClick={handleLogin}
-              disabled={!isFormValid}
-              className={`flex items-center justify-center gap-2 rounded-md ${
-                isFormValid ? "cursor-pointer" : "cursor-not-allowed"
-              }`}
-              style={{
-                backgroundColor: isFormValid ? COLORS.primary : COLORS.gray,
-                padding: "14px 24px",
-                transition: "background-color 0.3s",
-              }}
-            >
-              <p
-                className="text-gray-100 font-semibold"
-                style={{ fontSize: SIZES.bodyl }}
+            <div className="flex flex-col text-center">
+              <button
+                onClick={handleLogin}
+                disabled={!isFormValid}
+                className={`flex items-center justify-center gap-2 rounded-md ${
+                  isFormValid ? "cursor-pointer" : "cursor-not-allowed"
+                }`}
+                style={{
+                  backgroundColor: isFormValid ? COLORS.primary : COLORS.gray,
+                  padding: "14px 24px",
+                  transition: "background-color 0.3s",
+                }}
               >
-                Iniciar Sessão
-              </p>
-              <ArrowRight />
-            </button>
+                <p
+                  className="text-gray-100 font-semibold"
+                  style={{ fontSize: SIZES.bodyl }}
+                >
+                  Iniciar Sessão
+                </p>
+                <ArrowRight />
+              </button>
+
+              {loginError === "EMAIL_NOT_VERIFIED" && (
+                <div
+                  className="text-red-500 font-regular mt-2 flex items-center gap-1"
+                  style={{ fontSize: SIZES.small }}
+                >
+                  Esta conta não foi verificada.{" "}
+                  <p
+                    onClick={handleResend}
+                    className="underline cursor-pointer"
+                  >
+                    Verificar agora
+                  </p>
+                </div>
+              )}
+            </div>
             <div
               className="flex justify-center items-center gap-1 text-gray-900 font-regular"
               style={{ fontSize: SIZES.caption }}

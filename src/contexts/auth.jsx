@@ -36,16 +36,22 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (body) => {
-    try {
-      const response = await api.post("/api/auth/login", body);
-      const { token, user } = response.data.data;
-      localStorage.setItem("token", token);
-      setUser(user);
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw new Error("Credenciais incorretas");
+  try {
+    const response = await api.post("/api/auth/login", body);
+    const { token, user } = response.data.data;
+    localStorage.setItem("token", token);
+    setUser(user);
+  } catch (error) {
+    console.error("Login failed:", error);
+
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
     }
-  };
+
+    throw new Error("Credenciais incorretas");
+  }
+};
+
 
   const register = async (body) => {
   try {
