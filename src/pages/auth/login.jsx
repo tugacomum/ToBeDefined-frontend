@@ -42,7 +42,7 @@ const Login = () => {
     if (hasError) return;
 
     try {
-      await login({ email: email.trim(), password: password.trim() });
+      await login({ email: email.trim(), password: password.trim(), keepLoggedIn: rememberMe });
     } catch (error) {
       if (error.message === "Email não verificado") {
         setLoginError("EMAIL_NOT_VERIFIED");
